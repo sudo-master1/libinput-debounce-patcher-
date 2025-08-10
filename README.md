@@ -28,7 +28,9 @@ Common Mistakes:
 1.You need to press y (lowercase) for now, because uppercase Y or n do not work.
 
 
-
+how to turn it back into normal arch libinput 
+u just need to reinstall libinput for ex :- in arch i can just type in terminal sudo pacman -S libinput 
+to fix it 
 
 
 btw chat gpt was used to correct my BAD spellings and get 2nd opiniun this part i aint going to send him to correct and this is the actuall un llm version :-
