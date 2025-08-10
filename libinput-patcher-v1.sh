@@ -182,8 +182,8 @@ main() {
     echo -e "${BOLD}${GREEN}=== Libinput Debounce Remover (SAFE) ===${RESET}"
     echo -e "${YELLOW}This will remove system libinput and install a patched build with debounce disabled.${RESET}"
     echo -e "${YELLOW}Make sure you have a way to access your system if input behaves unexpectedly (ssh/tty).${RESET}"
-    read -rp "Type 'YES' to proceed: " confirm
-    if [ "$confirm" != "YES" ]; then
+    read -rp "Type 'y' to proceed: " confirm
+    if [ "$confirm" != "y" ]; then
         log "Aborting by user request."
         exit 0
     fi
