@@ -5,6 +5,8 @@ used chat gpt to check the code and trouble shute
 
 i live in india and english is not my native lang so pls IGNORE spelling mistakes !!!!!
 
+THIS IS MENT FOR LINUX
+
 HOW TO USE
 
 1. go to the dir where u downloaded this file in terminal by cd ex: cd Downloads
