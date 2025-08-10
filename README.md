@@ -10,9 +10,7 @@ I live in India and English is not my native language, so please ignore any mist
 This is meant for Linux only.
 How to Use:
 
-    Go to the directory where you downloaded this file in the terminal. Example:
-
-cd Downloads
+    Go to the directory where you downloaded this file in the terminal. Example: cd Downloads
 
 Make the file executable:
 
