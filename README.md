@@ -1,4 +1,7 @@
 # libinput-debounce-patcher
+
+DISCLAMER :- i DO NOT update the release tab pls kindly download the file from source as it is not source it is just an .sh file !!
+
 u hered it u want to play bedwars but ur cps be like 6 or 7 max u have 12 in windows i just patched that 
 
 used chat gpt to check the code and trouble shute
