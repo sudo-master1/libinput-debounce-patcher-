@@ -5,6 +5,9 @@ used chat gpt to check the code and trouble shute
 
 i live in india and english is not my native lang so pls IGNORE spelling mistakes !!!!!
 
+HOW TO USE
 
-chmod +x patch-libinput-debounce-safe.sh
+1. go to the dir where u downloaded this file in terminal by cd ex: cd Downloads
+2. execute chmod +x libinput-patcher-v1.sh
+3. execute sudo ./libinput-patcher-v1.sh
 
