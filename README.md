@@ -13,3 +13,5 @@ HOW TO USE
 2. execute chmod +x libinput-patcher-v1.sh
 3. execute sudo ./libinput-patcher-v1.sh
 
+Coman Mistakes
+1. U NEED TO PRESS y ONLY FOR NOW BECAUSE capital or n does not work
