@@ -9,22 +9,23 @@ I live in India and English is not my native language, so please ignore any mist
 
 This is meant for Linux only.
 How to Use:
+1. Go to the directory where you downloaded this file in the terminal.
 
-    Go to the directory where you downloaded this file in the terminal. Example: cd Downloads
+    cd Downloads
 
-Make the file executable:
+2. Make the file executable:
 
 chmod +x libinput-patcher-v1.sh
 
-Run the script with:
+3. Run the script with:
 
     sudo ./libinput-patcher-v1.sh
 
 Common Mistakes:
 
-    You need to press y (lowercase) for now, because uppercase Y or n do not work.
+1.You need to press y (lowercase) for now, because uppercase Y or n do not work.
 
-btw chat gpt was used to correct my BAD spellings and get 2nd opiniun this part i aint going to send him to correct and this is the actuall un llm version 
+btw chat gpt was used to correct my BAD spellings and get 2nd opiniun this part i aint going to send him to correct and this is the actuall un llm version :-
 
 
 DISCLAMER :- i DO NOT update the release tab pls kindly download the file from source as it is not source it is just an .sh file !!
