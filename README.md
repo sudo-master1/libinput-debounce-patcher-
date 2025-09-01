@@ -1,7 +1,7 @@
 # libinput-debounce-patcher
 DISCLAIMER: I do NOT update the releases tab. Please kindly download the file from the source — the file is just a .sh script, not the actual source code!
 
-So… I heard you want to play BedWars on your Linux machine, but your CPS is stuck at 6 or 7 max, while you can get 12 on Windows. I patched that, so you don’t have to go back to the prison of Windows just to play your favorite game — or for any other reason.
+So… I heard you want to play BedWars on your Linux machine, but your CPS is stuck at 6 or 7 max, while you can get 12 on Windows. I patched that, so you don’t have to go back to the prison of Windows just to play your favorite game - or for any other reason.
 
 I used ChatGPT to check and troubleshoot the code. and and to check for spelling mistake
 
