@@ -1,5 +1,8 @@
 # libinput-debounce-patcher
-this script makes ur cps in arch go brr
+
+note we only support fedora ubunu / debian and arch other os are not supported we are not liable if u brick ur system running this and have to reinstall ur linux distro
+
+this script makes ur cps in arch go brr in cps
 
 DISCLAIMER: I do NOT update the releases tab. Please kindly download the file from the source — the file is just a .sh script, not the actual source code!
 
