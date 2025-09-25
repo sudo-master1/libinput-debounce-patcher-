@@ -6,7 +6,7 @@
 # - Removes existing libinput packages
 # - Clones libinput, patches debounce timers to zero
 # - Builds and installs libinput into /usr (replaces system libinput)
-# - Prints final message and waits 5s for user; then reloads udev and restarts Plasma
+# - Prints final message and waits 5s for user; then reloads udev and restarts
 # - On error, attempts to restore backed-up libinput files
 #
 # WARNING: This script will remove and replace system libinput. Use at your own risk.
@@ -174,7 +174,7 @@ finalize_and_restart() {
     sudo udevadm control --reload-rules && sudo udevadm trigger
 
     log "Restarting Plasma shell (user)..."
-    systemctl --user restart plasma-plasmashell || warn "Could not restart Plasma automatically — you may need to log out and back in."
+    sudo restart now || warn "Could not restart automatically — you may need to log out and back in."
 }
 
 # ---- safe-run main ----
