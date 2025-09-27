@@ -95,4 +95,8 @@ and this is the explanation (pls only read if u are technical)
 
   14.  after it does everything it gives a congratulations msg saying All done and then trys to restart but fails cuz i do not know how to fix :( and then waits for u to read that is finishes before giving the error to restart manually even if i tried everything
 
+
+edit :- it works now i think :D
+
+
 for more exact words / code of what it does pls kindly read the code
