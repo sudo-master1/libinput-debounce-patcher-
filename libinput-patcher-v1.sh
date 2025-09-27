@@ -202,7 +202,8 @@ main() {
     finalize_and_restart
 
     log "Done. Build dir: $WORKDIR/libinput (you can remove it)"
-    log "If you see input problems, run the restore command or reboot to recover."
+    log "If you see input problems, run the restore command or boot into the live usb if u cant oparate the pc and chroot with arch-chroot for arch and reinstall libinput by sudo pacman -Syu libinput to recover. if u use debian gnu/linux or fedora gnu/linux u are cooked and need to fix it by yourself 
+    peace out !!"
 }
 
 main
