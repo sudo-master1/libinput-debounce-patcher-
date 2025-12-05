@@ -28,7 +28,7 @@ chmod +x libinput-patcher-v2.sh
 
 3. Run the script with
 
-    sudo ./libinput-patcher-v2.sh
+   ./libinput-patcher-v2.sh
 
 
 
