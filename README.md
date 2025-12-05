@@ -17,17 +17,19 @@ I live in India and English is not my native language, so please ignore any mist
 
 This is meant for Linux only.
 How to Use:
-1. Go to the directory where you downloaded this file in the terminal.
 
-    cd Downloads
+1. install git for arch sudo pacman -S git
 
-2. Make the file executable:
+2 go into the downloaded directory if  dont know its usually in cd ~ , ls (list file) , find something related to     libinput-debounce-patcher-
 
-chmod +x libinput-patcher-v1.sh
+
+3. Make the file executable:
+
+chmod +x libinput-patcher-v2.sh
 
 3. Run the script with:
 
-    sudo ./libinput-patcher-v1.sh
+    sudo ./libinput-patcher-v2.sh
 
 
 
