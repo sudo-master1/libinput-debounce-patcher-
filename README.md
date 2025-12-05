@@ -20,8 +20,7 @@ How to Use:
 
 1. install git for arch sudo pacman -S git
 
-2. git clone https://github.com/sudo-master1/libinput-debounce-patcher-.git
-cd libinput-debounce-patcher-
+2. git clone https://github.com/sudo-master1/libinput-debounce-patcher-.git | cd libinput-debounce-patcher-
 
 3. Make the file executable:
 
