@@ -1,5 +1,8 @@
 # libinput-debounce-patcher
 BTW THIS HAS BEEN VIBE CODED but it works im trying to learn english and trying to improve this and unvibe code it but if u want u can use this IT WORKS THO
+
+always download the highest v no and execute
+
 note we only support fedora ubunu / debian and arch other os are not supported we are not liable if u brick ur system running this and have to reinstall ur linux distro
 
 this script makes ur cps in arch go brr in cps
