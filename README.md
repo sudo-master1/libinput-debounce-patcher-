@@ -20,14 +20,14 @@ How to Use:
 
 1. install git for arch sudo pacman -S git
 
-2 go into the downloaded directory if  dont know its usually in cd ~ , ls (list file) , find something related to     libinput-debounce-patcher-
-
+2. git clone https://github.com/sudo-master1/libinput-debounce-patcher-.git
+cd libinput-debounce-patcher-
 
 3. Make the file executable:
 
 chmod +x libinput-patcher-v2.sh
 
-3. Run the script with:
+3. Run the script with
 
     sudo ./libinput-patcher-v2.sh
 
