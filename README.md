@@ -24,11 +24,11 @@ How to Use:
 
 3. Make the file executable:
 
-chmod +x libinput-patcher-v2.sh
+chmod +x libinput-patcher-v1.sh
 
 3. Run the script with
 
-   ./libinput-patcher-v2.sh
+   ./libinput-patcher-v1.sh
 
 
 
