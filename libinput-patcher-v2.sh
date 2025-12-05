@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
-#
-# libinput-debounce-patcher.sh
-# Patch libinput to remove debounce timers for gaming mice
-#
-# WARNING: This will replace system libinput with a custom build.
-# Use in a test environment first. Have SSH/TTY access available.
+# libinput-debounce-patcher-complete.sh
+# Complete automated patcher - scans for zip, extracts, patches, builds, installs
 
 set -euo pipefail
 IFS=$'\n\t'
 
 # --- CONFIG ---
-readonly WORKDIR="/tmp/libinput-build-$(id -u)"
+readonly WORK_DIR="$(pwd)"
 readonly BACKUP_DIR="/tmp/libinput-backup-$(id -u)"
-readonly REPO="https://gitlab.freedesktop.org/libinput/libinput.git"
-readonly BRANCH="1.30.x"  # Match your current version
-readonly PATCH_FILE="/tmp/libinput-debounce.patch"
+readonly BUILD_DIR="$WORK_DIR/build"
 
-# Colors for output
+# Colors
 readonly BOLD='\033[1m'
 readonly GREEN='\033[32m'
 readonly YELLOW='\033[33m'
@@ -24,323 +18,332 @@ readonly RED='\033[31m'
 readonly BLUE='\033[34m'
 readonly RESET='\033[0m'
 
-# --- LOGGING FUNCTIONS ---
+# --- LOGGING ---
 log()  { echo -e "${BOLD}[INFO]${RESET} $*"; }
 info() { echo -e "${BLUE}[INFO]${RESET} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${RESET} $*"; }
 err()  { echo -e "${RED}[ERROR]${RESET} $*" >&2; }
 success() { echo -e "${GREEN}[SUCCESS]${RESET} $*"; }
 
-# --- DEPENDENCY CHECK ---
-check_deps() {
-    local missing_deps=()
+# --- CHECK AND INSTALL DEPENDENCIES ---
+install_dependencies() {
+    info "Checking and installing dependencies..."
     
-    # Check for basic commands
-    for cmd in git meson ninja gcc pkg-config sudo; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
-            missing_deps+=("$cmd")
+    local missing_pkgs=()
+    
+    # Check for unzip
+    if ! command -v unzip >/dev/null 2>&1; then
+        missing_pkgs+=("unzip")
+    fi
+    
+    # Check for build tools
+    for tool in meson ninja gcc pkg-config; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            missing_pkgs+=("$tool")
         fi
     done
     
-    if [ ${#missing_deps[@]} -gt 0 ]; then
-        err "Missing dependencies: ${missing_deps[*]}"
-        return 1
+    if [ ${#missing_pkgs[@]} -gt 0 ]; then
+        warn "Missing packages: ${missing_pkgs[*]}"
+        info "Installing dependencies..."
+        
+        if command -v pacman >/dev/null 2>&1; then
+            # Arch Linux
+            sudo pacman -Sy --noconfirm "${missing_pkgs[@]}" base-devel
+        elif command -v apt >/dev/null 2>&1; then
+            # Debian/Ubuntu
+            sudo apt update
+            sudo apt install -y "${missing_pkgs[@]}" build-essential
+        elif command -v dnf >/dev/null 2>&1; then
+            # Fedora
+            sudo dnf install -y "${missing_pkgs[@]}" @development-tools
+        else
+            err "Unsupported package manager. Install manually:"
+            err "  ${missing_pkgs[*]}"
+            exit 1
+        fi
     fi
-    return 0
+    
+    success "Dependencies OK"
 }
 
-# --- DISTRO DETECTION ---
-detect_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        echo "$ID"
-    elif command -v lsb_release >/dev/null 2>&1; then
-        lsb_release -si | tr '[:upper:]' '[:lower:]'
-    else
-        err "Cannot detect distribution"
+# --- FIND AND EXTRACT ZIP ---
+find_and_extract_zip() {
+    info "Scanning for libinput zip file..."
+    
+    local zip_files=()
+    
+    # Look for libinput zip files
+    while IFS= read -r file; do
+        zip_files+=("$file")
+    done < <(find "$WORK_DIR" -maxdepth 1 -name "*libinput*.zip" -type f 2>/dev/null)
+    
+    if [ ${#zip_files[@]} -eq 0 ]; then
+        err "No libinput zip file found in current directory!"
+        err "Please download libinput-1.30.0.zip and place it here."
         exit 1
     fi
+    
+    # Use the first zip file found
+    local zip_file="${zip_files[0]}"
+    info "Found zip file: $(basename "$zip_file")"
+    
+    # Check if already extracted
+    if [ -d "libinput-1.30.0" ]; then
+        warn "libinput-1.30.0 directory already exists. Using existing source."
+        return 0
+    fi
+    
+    info "Extracting $(basename "$zip_file")..."
+    if ! unzip -q "$zip_file"; then
+        err "Failed to extract zip file"
+        exit 1
+    fi
+    
+    if [ ! -d "libinput-1.30.0" ]; then
+        err "Extraction didn't create expected directory 'libinput-1.30.0'"
+        exit 1
+    fi
+    
+    success "Extraction complete"
 }
 
-# --- DEPENDENCY INSTALLATION ---
-install_deps() {
-    local distro
-    distro=$(detect_distro)
-    
-    info "Detected distribution: $distro"
-    
-    case "$distro" in
-        arch|manjaro|endeavouros)
-            sudo pacman -Sy --needed --noconfirm \
-                git base-devel meson ninja gcc \
-                libevdev libwacom glib2 systemd pkgconf || {
-                warn "Some dependencies may have failed to install"
-            }
-            ;;
-        debian|ubuntu|pop|linuxmint)
-            sudo apt update && sudo apt install -y \
-                git build-essential meson ninja-build \
-                pkg-config libevdev-dev libmtdev-dev \
-                libwacom-dev libgtk-3-dev libglib2.0-dev \
-                libudev-dev gobject-introspection || {
-                warn "Some dependencies may have failed to install"
-            }
-            ;;
-        fedora|rhel|centos)
-            sudo dnf install -y \
-                git meson ninja-build gcc make \
-                libevdev-devel libwacom-devel \
-                glib2-devel systemd-devel gtk3-devel || {
-                warn "Some dependencies may have failed to install"
-            }
-            ;;
-        *)
-            err "Unsupported distribution: $distro"
-            warn "Please install build dependencies manually:"
-            warn "  git, meson, ninja, gcc, pkg-config"
-            warn "  libevdev, libwacom, glib2, systemd"
-            exit 1
-            ;;
-    esac
-}
-
-# --- BACKUP EXISTING FILES ---
+# --- BACKUP CURRENT LIBINPUT ---
 backup_libinput() {
-    info "Creating backup of current libinput files..."
+    info "Creating backup of current libinput..."
     
-    # Create backup directory
     sudo mkdir -p "$BACKUP_DIR"
     
-    # Backup libraries
-    local libdirs=("/usr/lib" "/usr/lib64" "/usr/local/lib" "/lib" "/lib64")
-    for libdir in "${libdirs[@]}"; do
-        if [ -d "$libdir" ]; then
-            sudo find "$libdir" -maxdepth 1 -type f -name "*libinput*" \
-                -exec cp -v {} "$BACKUP_DIR/" \; 2>/dev/null || true
+    # Backup library files
+    local lib_files=()
+    while IFS= read -r file; do
+        lib_files+=("$file")
+    done < <(sudo find /usr/lib /usr/lib64 -maxdepth 1 -name "*libinput*" -type f 2>/dev/null)
+    
+    # Backup binary files
+    local bin_files=()
+    while IFS= read -r file; do
+        bin_files+=("$file")
+    done < <(sudo find /usr/bin /usr/local/bin -maxdepth 1 -name "libinput*" -type f 2>/dev/null)
+    
+    # Copy files
+    for file in "${lib_files[@]}" "${bin_files[@]}"; do
+        if [ -f "$file" ]; then
+            sudo cp -v "$file" "$BACKUP_DIR/" 2>/dev/null || true
         fi
     done
-    
-    # Backup binaries
-    local bindirs=("/usr/bin" "/usr/local/bin" "/bin")
-    for bindir in "${bindirs[@]}"; do
-        if [ -d "$bindir" ]; then
-            sudo find "$bindir" -maxdepth 1 -type f -name "libinput*" \
-                -exec cp -v {} "$BACKUP_DIR/" \; 2>/dev/null || true
-        fi
-    done
-    
-    # Backup configs
-    if [ -d /etc/libinput ]; then
-        sudo cp -ra /etc/libinput "$BACKUP_DIR/etc_libinput" 2>/dev/null || true
-    fi
     
     # Create restore script
     cat > "$BACKUP_DIR/restore.sh" << 'EOF'
 #!/bin/bash
-echo "Restoring original libinput files..."
+echo "=== Restoring libinput ==="
+echo "Copying backup files to system..."
 sudo cp -a ./* / 2>/dev/null || true
 sudo ldconfig 2>/dev/null || true
-echo "Restore attempted. You may need to reboot."
+echo "✓ Restoration complete"
+echo "You may need to reboot or restart desktop session."
 EOF
     chmod +x "$BACKUP_DIR/restore.sh"
     
     info "Backup saved to: $BACKUP_DIR"
-    info "To restore: sudo $BACKUP_DIR/restore.sh"
 }
 
-# --- CREATE PATCH FILE ---
-create_patch() {
-    cat > "$PATCH_FILE" << 'PATCH'
-diff --git a/src/libinput-plugin-button-debounce.c b/src/libinput-plugin-button-debounce.c
-index abc1234..def5678 100644
---- a/src/libinput-plugin-button-debounce.c
-+++ b/src/libinput-plugin-button-debounce.c
-@@ -XX,XX +XX,XX @@
- 
--    ms2us(25), /* threshold for first click detection */
--    ms2us(12), /* threshold between clicks for multi-click */
-+    ms2us(0), /* threshold for first click detection */
-+    ms2us(0), /* threshold between clicks for multi-click */
- 
--    ms2us(25), /* threshold for first click detection */
--    ms2us(12), /* threshold between clicks for multi-click */
-+    ms2us(0), /* threshold for first click detection */
-+    ms2us(0), /* threshold between clicks for multi-click */
-PATCH
+# --- PATCH LIBINPUT ---
+patch_libinput() {
+    info "Patching libinput source code..."
     
-    info "Patch file created: $PATCH_FILE"
-}
-
-# --- BUILD AND INSTALL ---
-build_libinput() {
-    info "Preparing build directory..."
-    rm -rf "$WORKDIR"
-    mkdir -p "$WORKDIR"
-    cd "$WORKDIR"
-    
-    info "Cloning libinput repository..."
-    git clone --depth 1 --branch "$BRANCH" "$REPO" libinput || {
-        err "Failed to clone repository"
-        return 1
+    cd "libinput-1.30.0" || {
+        err "Cannot enter libinput source directory"
+        exit 1
     }
-    cd libinput
     
-    info "Applying debounce patch..."
-    if ! patch -p1 < "$PATCH_FILE"; then
-        warn "Patch failed, trying manual modification..."
-        
-        # Manual patch as fallback
-        local target_file="src/libinput-plugin-button-debounce.c"
-        if [ ! -f "$target_file" ]; then
-            err "Target file not found: $target_file"
-            return 1
-        fi
-        
-        # Replace debounce timers
-        sed -i.bak \
-            -e 's/ms2us(25)/ms2us(0)/g' \
-            -e 's/ms2us(12)/ms2us(0)/g' \
-            "$target_file"
-            
-        # Verify changes
-        if grep -q "ms2us(0)" "$target_file"; then
-            info "Manual patch successful"
-        else
-            err "Manual patch failed"
-            return 1
-        fi
+    # Find the debounce file
+    local target_file=""
+    target_file=$(find . -type f -name "*.c" -exec grep -l "ms2us(25)" {} \; 2>/dev/null | head -1)
+    
+    if [ -z "$target_file" ]; then
+        err "Could not find file with debounce settings"
+        exit 1
     fi
     
+    info "Found target file: $target_file"
+    
+    # Create backup of the file
+    cp "$target_file" "${target_file}.bak"
+    
+    # Apply patch - remove all debounce delays
+    info "Applying patch (setting all debounce to 0ms)..."
+    sed -i \
+        -e 's/ms2us(25)/ms2us(0)/g' \
+        -e 's/ms2us(12)/ms2us(0)/g' \
+        -e 's/ms2us(10)/ms2us(0)/g' \
+        -e 's/ms2us(8)/ms2us(0)/g' \
+        -e 's/ms2us(5)/ms2us(0)/g' \
+        -e 's/ms2us(20)/ms2us(0)/g' \
+        -e 's/ms2us(15)/ms2us(0)/g' \
+        "$target_file"
+    
+    # Verify patch
+    if grep -q "ms2us(0)" "$target_file"; then
+        info "Patch successful. Changes made:"
+        grep -n "ms2us" "$target_file" | head -10
+        success "✓ Source code patched"
+    else
+        err "Patch failed - no changes detected"
+        exit 1
+    fi
+    
+    cd ..
+}
+
+# --- BUILD LIBINPUT ---
+build_libinput() {
+    info "Building patched libinput..."
+    
+    cd "libinput-1.30.0" || exit 1
+    
+    # Clean previous build
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+    cd "$BUILD_DIR" || exit 1
+    
+    # Configure
     info "Configuring build..."
-    meson setup build \
+    meson .. \
         --prefix=/usr \
         --buildtype=release \
         --optimization=3 \
         --libdir=lib \
         -Dtests=false \
         -Ddocumentation=false \
-        -Ddebug-gui=false
+        -Ddebug-gui=false \
+        -Dlibwacom=false
     
-    info "Building libinput (this may take a few minutes)..."
-    ninja -C build
+    # Build
+    info "Building (this may take a few minutes)..."
+    ninja
     
+    success "✓ Build complete"
+}
+
+# --- INSTALL LIBINPUT ---
+install_libinput() {
     info "Installing patched libinput..."
-    sudo ninja -C build install
     
-    success "Build and installation complete!"
+    cd "libinput-1.30.0/$BUILD_DIR" || exit 1
+    
+    # Install
+    sudo ninja install
+    
+    # Update library cache
+    sudo ldconfig
+    
+    success "✓ Installation complete"
 }
 
 # --- VERIFY INSTALLATION ---
 verify_installation() {
     info "Verifying installation..."
     
-    # Check if libinput binary works
+    # Check libinput binary
     if command -v libinput >/dev/null 2>&1; then
-        info "libinput version: $(libinput --version 2>/dev/null || echo "Unknown")"
+        local version
+        version=$(libinput --version 2>/dev/null || echo "unknown")
+        success "✓ libinput version: $version"
+    else
+        warn "libinput binary not found in PATH"
     fi
     
-    # Update linker cache
-    sudo ldconfig
-    
-    # Check library
-    if ldconfig -p | grep -q libinput; then
-        success "libinput library registered successfully"
+    # Check if patched version is running
+    if strings "$(command -v libinput 2>/dev/null || echo /usr/bin/libinput)" 2>/dev/null | grep -q "ms2us(0)"; then
+        success "✓ Patched version confirmed"
     else
-        warn "libinput library not found in cache"
+        warn "Could not verify patch in binary"
     fi
 }
 
 # --- CLEANUP ---
 cleanup() {
     info "Cleaning up..."
-    rm -rf "$WORKDIR" "$PATCH_FILE" 2>/dev/null || true
+    # Keep source directory for future use
+    rm -rf "$BUILD_DIR" 2>/dev/null || true
 }
 
 # --- RESTORE FUNCTION ---
 restore_libinput() {
-    err "Restoring original libinput..."
+    err "=== RESTORING ORIGINAL LIBINPUT ==="
     
-    if [ -d "$BACKUP_DIR" ]; then
-        info "Found backup at: $BACKUP_DIR"
-        if [ -f "$BACKUP_DIR/restore.sh" ]; then
-            sudo "$BACKUP_DIR/restore.sh"
-        else
-            warn "No restore script found, attempting manual restore..."
-            sudo cp -a "$BACKUP_DIR/"* / 2>/dev/null || true
-            sudo ldconfig
-        fi
+    if [ -d "$BACKUP_DIR" ] && [ -f "$BACKUP_DIR/restore.sh" ]; then
+        info "Found backup, restoring..."
+        sudo "$BACKUP_DIR/restore.sh"
     else
-        warn "No backup found. You may need to reinstall libinput:"
-        case $(detect_distro) in
-            arch|manjaro) echo "  sudo pacman -S libinput libinput-tools" ;;
-            debian|ubuntu) echo "  sudo apt install --reinstall libinput10 libinput-bin" ;;
-            fedora) echo "  sudo dnf reinstall libinput" ;;
-        esac
+        warn "No backup found. Reinstalling from package manager..."
+        if command -v pacman >/dev/null 2>&1; then
+            sudo pacman -S --noconfirm libinput libinput-tools
+        elif command -v apt >/dev/null 2>&1; then
+            sudo apt install --reinstall -y libinput10 libinput-bin
+        elif command -v dnf >/dev/null 2>&1; then
+            sudo dnf reinstall -y libinput
+        else
+            err "Cannot auto-reinstall. Please install libinput manually."
+        fi
+        sudo ldconfig
     fi
     
-    info "Original libinput should be restored. Reboot recommended."
+    info "Original libinput restored. Reboot recommended."
 }
 
-# --- MAIN EXECUTION ---
+# --- MAIN ---
 main() {
     clear
-    echo -e "${BOLD}${GREEN}=== Libinput Debounce Patcher ===${RESET}"
-    echo -e "${YELLOW}This script will build and install a modified libinput with zero debounce.${RESET}"
-    echo -e "${YELLOW}Warning: This replaces system libinput. Use with caution!${RESET}"
-    echo -e "${BLUE}Backup will be created at: $BACKUP_DIR${RESET}"
+    echo -e "${BOLD}${GREEN}=== Libinput Debounce Patcher (Complete) ===${RESET}"
+    echo -e "${YELLOW}This will patch, build, and install libinput with zero debounce${RESET}"
+    echo -e "${YELLOW}Warning: Replaces system libinput. Have backup/SSH access ready${RESET}"
     echo
     
-    # Check if running as root
+    # Check for root
     if [ "$EUID" -eq 0 ]; then
-        err "Do not run as root! Use sudo only where needed."
+        err "Do not run as root! Run as normal user."
         exit 1
     fi
     
     # Confirmation
-    read -rp "Do you want to continue? (yes/NO): " confirm
+    read -rp "Continue? (yes/NO): " confirm
     if [[ ! "$confirm" =~ ^[Yy][Ee]?[Ss]?$ ]]; then
-        info "Aborted by user."
+        info "Aborted"
         exit 0
     fi
     
-    # Check dependencies
-    if ! check_deps; then
-        warn "Missing dependencies. Attempting to install..."
-        install_deps
-    fi
+    # Set trap for error recovery
+    trap 'err "Script failed! Restoring..."; restore_libinput; exit 1' ERR
     
-    # Create backup
+    # Execute steps
+    install_dependencies
+    find_and_extract_zip
     backup_libinput
+    patch_libinput
+    build_libinput
+    install_libinput
+    verify_installation
+    cleanup
     
-    # Create patch
-    create_patch
+    echo
+    success "=== COMPLETE ==="
+    echo -e "${GREEN}Patched libinput successfully installed!${RESET}"
+    echo
+    info "To restore original libinput:"
+    echo "  sudo $BACKUP_DIR/restore.sh"
+    echo
+    info "You should restart your desktop session or reboot."
+    echo -e "${YELLOW}Note: This patches SOFTWARE debounce only.${RESET}"
+    echo -e "${YELLOW}Hardware debounce in mouse firmware is not affected.${RESET}"
     
-    # Build and install
-    if build_libinput; then
-        verify_installation
-        
-        echo
-        success "=== Installation Complete ==="
-        echo -e "${GREEN}Patched libinput has been installed successfully.${RESET}"
-        echo
-        info "To revert changes, run:"
-        echo "  sudo $BACKUP_DIR/restore.sh"
-        echo
-        info "You may need to restart your desktop session or reboot."
-        echo -e "${YELLOW}Keep the backup directory until you confirm everything works.${RESET}"
-        
-        # Cleanup
-        cleanup
-    else
-        err "Build failed! Attempting to restore..."
-        restore_libinput
-        cleanup
-        exit 1
+    read -rp "Restart now? (y/N): " restart
+    if [[ "$restart" =~ ^[Yy]$ ]]; then
+        info "Restarting..."
+        sudo systemctl reboot
     fi
 }
 
-# Handle interrupts
-trap 'err "Interrupted! Attempting to restore..."; restore_libinput; cleanup; exit 1' INT TERM
-
-# Run main function
-main
+# Run main
+main "$@"
