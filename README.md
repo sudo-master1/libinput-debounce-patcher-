@@ -7,3 +7,6 @@ temprory fix use at ur own risk after u patch u should probably look into info o
 
 
 cmd :- git clone --depth 1 https://gitlab.freedesktop.org/libinput/libinput && sed -i 's/const usec_t DEBOUNCE_TIMEOUT_BOUNCE = usec_from_millis(25);/const usec_t DEBOUNCE_TIMEOUT_BOUNCE = usec_from_millis(0);/' ~/libinput/src/libinput-plugin-button-debounce.c && sed -i 's/const usec_t DEBOUNCE_TIMEOUT_SPURIOUS = usec_from_millis(12);/const usec_t DEBOUNCE_TIMEOUT_SPURIOUS = usec_from_millis(0);/' ~/libinput/src/libinput-plugin-button-debounce.c && cd libinput && meson setup --prefix=/usr builddir/ && ninja -C builddir/ && sudo ninja -C builddir/ install && sudo systemd-hwdb update
+
+
+thats one of the things that work working on disabling the plugin itself so it might not take ur 1 byte of ram
