@@ -10,3 +10,12 @@ cmd :- git clone --depth 1 https://gitlab.freedesktop.org/libinput/libinput && s
 
 
 thats one of the things that work working on disabling the plugin itself so it might not take ur 1 byte of ram
+
+test sed command testing rn
+
+cd ~/libinput
+sed -i '417s/^[[:space:]]*'\''src\/libinput-plugin-button-debounce\.c'\'',/#&/' meson.build
+sed -i '512s/^[[:space:]]*libinput_debounce_plugin(libinput);/\/\/&/' src/libinput-plugin.c
+sed -i '34s/^#include "libinput-plugin-button-debounce.h"/\/\/&/' src/libinput-plugin.c
+
+
