@@ -19,3 +19,8 @@ sed -i '512s/^[[:space:]]*libinput_debounce_plugin(libinput);/\/\/&/' src/libinp
 sed -i '34s/^#include "libinput-plugin-button-debounce.h"/\/\/&/' src/libinput-plugin.c
 
 
+
+new cmd :- 
+cd ~/libinput && sed -i '417s/^[[:space:]]*'\''src\/libinput-plugin-button-debounce\.c'\'',/#&/' meson.build && sed -i '512s/^[[:space:]]*libinput_debounce_plugin(libinput);/\/\/&/' src/libinput-plugin.c && sed -i '34s/^#include "libinput-plugin-button-debounce.h"/\/\/&/' src/libinput-plugin.c && meson setup --prefix=/usr builddir/ --reconfigure --wipe && ninja -C builddir/ && sudo ninja -C builddir/ install && sudo systemd-hwdb update
+
+
