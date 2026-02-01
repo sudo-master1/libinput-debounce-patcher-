@@ -9,8 +9,11 @@ what this does :-
 4. uses ninja to set build dir and install
 5. updates systemd-hwdb
 
+working on another method !!
 
-   DO NOT USE THE SCRIPT ITS STILL IN DEVLOPMENT AND USES AI AND DOESNT WORK USE THE ABOVE COMMAND FOR NOW !!!
+but this works as of now
+
+   DO NOT USE THE SCRIPT in the source code ITS STILL IN DEVLOPMENT AND USES AI AND DOESNT WORK USE THE ABOVE COMMAND FOR NOW !!!
 
 
 
